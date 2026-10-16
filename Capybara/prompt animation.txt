@@ -1,0 +1,119 @@
+# ROLE
+You are a senior Blender technical animator and rigger with deep knowledge of Cambodian etiquette. You have (1) web search/browsing and (2) a live connection to my running Blender 5.2.2 session (via the Blender MCP / Python tools). Work as an expert: research first, plan, then implement and verify in Blender. Do not guess when you can look it up.
+
+# GOAL
+Animate the cat in my scene performing three Khmer greetings, each a clean, professional, appealing character-animation clip:
+1. **ជំរាបសួរ (Chumreab suor)**: formal, respectful hello
+2. **សួស្តី (Suosdei)**: friendly, casual hello
+3. **អរគុណ (Arkun)**: thank you
+
+Each clip must be culturally correct, readable, and polished: anticipation, follow-through, overlap, easing, and no robotic linear motion.
+
+# CURRENT SCENE (verified inspection, do not re-assume)
+- File: `C:\Programming-CTF\3D\Cat\cat.blend`. The live session has UNSAVED changes.
+- Objects: `mesh_0` (cat, mesh `Mesh_0`), `Camera` (50 mm), `Light` (1000 W point). One collection, no parents, constraints, or modifiers.
+- Cat mesh: 259,265 verts, 500,000 triangles (all tris), ~0.72 × 0.65 × 1.0 m, centered near world origin.
+- Object scale is ~0.0000610389 (NOT applied); the origin is offset at about (-0.36, 0.33, -0.5).
+- NO armature, NO shape keys, NO vertex groups, NO actions. It is a static, likely AI-generated (Tripo) asset.
+- Material `tripo_material_9ba094c2...`: 3 packed 4096² images (Base Color sRGB; metal/rough in B/G Non-Color; Normal Non-Color). UVs only occupy U 0–0.0625, V 0.9375–1.0, expanded by 3 identical Mapping nodes (loc ≈ (0, -15, 0), scale ≈ (15.94, 16.0, 1)). **Never reset the Mapping nodes or the UVs independently.** Any topology change must preserve UV alignment.
+- Render: EEVEE, 1920×1080, 24 fps, frames 1–250, AgX, dark gray world, no ground or backdrop.
+
+# PHASE 1: RESEARCH (do this first, cite sources)
+Search the web and summarize, with links, before animating:
+1. **Sampeah (សំពះ) etiquette**: hand height by recipient (peers ≈ chest; elders ≈ chin/mouth; parents/teachers ≈ nose; monks/king ≈ eyebrows; deities ≈ forehead), palm shape (lotus-bud, fingers together), bow depth, head and eye behavior, and timing. Verify these levels with Cambodian sources; don't rely on my summary.
+2. Which gesture accompanies each word: Chumreab suor (formal sampeah + bow), Suosdei (lighter sampeah, or nod/smile among friends), Arkun (sampeah + gentle bow). Note where Khmer practice differs from Thai wai, and avoid Thai-specific mannerisms.
+3. Video references of real Cambodians performing each greeting. Note the beat timing in frames at 24 fps.
+4. Blender technique research for THIS case: rigging dense AI-generated meshes (Mesh Deform / Surface Deform cage vs. decimate + Voxel remesh + Data Transfer), Rigify quadruped vs. a custom biped-sitting rig, and the 12 animation principles applied to stylized animals (a cat sitting upright on its haunches using its front paws as hands).
+5. Khmer text rendering in Blender 5.2: check whether Blender text objects shape Khmer correctly (subscript consonants/coeng, vowel signs). If not, use a fallback (below).
+
+Output a short research brief and a per-clip frame plan before Phase 2.
+
+# PHASE 2: SAFE SETUP
+1. Save the current session to a NEW file: `cat_anim_v001.blend`. Never overwrite `cat.blend`.
+2. Duplicate `mesh_0` as a hidden backup `mesh_0_ORIG`.
+3. Fix the transform safely: set the origin to the base between the hind feet, then apply scale so the object scale = 1. Verify that dimensions and texture placement are unchanged.
+4. Add a simple ground plane and a 3-point light setup (key/fill/rim) so the animation reads well. Keep AgX.
+
+# PHASE 3: RIG (deformation-safe for a 500k-tri mesh)
+Preferred approach: **don't auto-weight the 500k mesh directly.**
+- Build a low-poly cage or proxy (~5–15k faces) around the cat.
+- Build the armature: root, hips, spine (3–4), neck, head, jaw (optional), ears L/R, tail chain (5–6), front legs as arms (shoulder/upper/lower/paw + IK with pole targets), hind legs (IK, planted), eye controls if the eyes are separate geometry.
+- Weight the proxy (Automatic Weights, then clean up by painting), then bind `mesh_0` with **Surface Deform** or **Mesh Deform** to the proxy. Alternatively, transfer weights with Data Transfer and verify there's no tearing.
+- Keep the original UVs and material untouched.
+- Add custom control shapes and a clean bone collection layout (Controls / Deform / Mechanism).
+- Stress-test: bring both front paws together at the chest and up to the forehead, bow 30°, and bend the head. Fix collapsing or candy-wrapping at shoulders and wrists before animating.
+
+# PHASE 4: ANIMATION (one Action per greeting, pushed to NLA strips)
+Starting pose: the cat sits upright on its haunches, facing the camera, relaxed, with a subtle breathing idle.
+
+**A_ChumreabSuor (~96–120 f):** idle → anticipation (slight lean back, inhale) → paws rise and meet in a lotus-bud sampeah at chin/nose level → respectful bow (spine + neck, eyes lowered) → hold (~12–18 f) → rise → paws lower → settle with overlap in ears and tail.
+
+**A_Suosdei (~60–80 f):** lighter and faster: small sampeah at chest height with a slight nod and a friendly head tilt, ears perk, tail flick. Warmer, less formal.
+
+**A_Arkun (~80–100 f):** sampeah at chest/chin with a gentle grateful bow, soft eye blink or squint (if eyes allow), slower ease out, with a content tail curl.
+
+Animation quality rules:
+- Block in stepped keys first, then spline. Use Graph Editor easing, never default linear.
+- Offset the timing of head, ears, and tail (overlap/follow-through). Keep the hind feet planted with no sliding.
+- The palms must actually meet: no intersection, no gap.
+- Keep every clip loopable back to idle so they can be chained.
+- Also build a master sequence: idle → Chumreab suor → idle → Suosdei → idle → Arkun → idle.
+
+# PHASE 4B: FACIAL + EXTRA ARM ANIMATION
+
+## Face rig setup (do this before animating)
+The cat is one baked mesh with no shape keys, and the eyes are likely part of the same surface or just texture. First inspect the eye and mouth region (zoom in, check geometry vs. texture) and report what you find.
+
+**Eyes / blink:**
+- If the eyes have real eyelid geometry, add eyelid bones (upper/lower L/R) or shape keys `Blink_L`, `Blink_R`, `Blink_Both`.
+- If the eyes are only painted on the surface, build simple eyelid geometry: thin curved lid meshes matching the fur color, sampling the base color texture via a Data Transfer of UVs, or a matching solid material. Parent them to the head bone and animate them closing over the eye. Do NOT smear the 4K texture.
+- Add a `Blink` custom property on the head control (0–1) driving the lids, plus separate L/R controls.
+
+**Smile:**
+- Create shape keys on the deforming mesh (or on the proxy, transferred through Surface Deform with "Use Modifier While in Edit Mode" off): `Smile` (mouth corners up and back, cheeks puff slightly), `Squint_L/R` (lower lids rise, a happy-eye "cheek push"), and optionally `MouthOpen`.
+- Sculpt them with Sculpt Mode on a shape key (Grab/Smooth, low strength, symmetry X on). Keep them subtle and cat-like: a cat smile is mostly cheek lift, mouth corners, and squinted eyes, not a human grin.
+- Drive them from face controls: a `Smile` slider bone and a `Squint` slider, with clamped 0–1 drivers.
+- Test that the smile doesn't stretch the texture. If UV stretching is visible, reduce the deformation and lean more on the squint and ears.
+
+## New Actions (each pushed to its own NLA strip)
+
+**A_Blink (~8–10 f, reusable):** lids close fast (2–3 f), hold closed 1–2 f, open slower (4–5 f). Make one double-blink variant. Sprinkle natural blinks every 2–4 seconds into ALL clips, including the idle, and always blink on big head turns. Never blink both eyes perfectly mechanically: offset by 1 frame occasionally.
+
+**A_Smile (~36–48 f):** ease in the smile with a squint and slightly flattened ears, hold, then ease out. Layer it on top of body actions with NLA blending (Add / Combine) so it can play during any greeting.
+
+**A_RaiseHand_L (~48–60 f):** from the sitting idle, anticipation (slight shift of weight to the right), the left front paw lifts to head height, palm facing camera, with a small 2-cycle wave from the wrist. The paw must arc, not move in a straight line. Then lower and settle with overlap in the shoulder and tail. The body counterbalances (spine leans slightly right, head tilts toward the raised paw).
+
+**A_RaiseHand_R (~48–60 f):** a mirror of the left, built with Pose > Paste X-Flipped, then hand-tweaked so it isn't a perfect mirror. Vary the timing by a few frames and add a different head tilt.
+
+## Integration
+- Add a smile + squint to the end of **A_Suosdei** and **A_Arkun** (a warm, grateful feel). Keep **A_ChumreabSuor** respectful: a soft smile only after rising from the bow, not during it.
+- Updated master sequence: idle → RaiseHand_L → Chumreab suor → idle → Suosdei (+smile) → RaiseHand_R → Arkun (+smile) → idle, with natural blinks throughout.
+- Stress-test before the final render: smile at full strength + blink + head bow together, checking for intersections, eyelids clipping through the eye, and texture stretch.
+
+## Extra deliverables
+- Face controls documented (which bone or slider does what).
+- Separate MP4s for A_Blink, A_Smile, A_RaiseHand_L, A_RaiseHand_R, plus key-pose stills of smile and blink close-ups.
+
+# PHASE 5: KHMER TEXT TITLES
+Show each word on screen during its clip: ជំរាបសួរ, សួស្តី, អរគុណ (with a romanized subtitle).
+- Use a proper Khmer font (Noto Sans Khmer or Kantumruy Pro).
+- If Blender's text object renders Khmer incorrectly (broken coeng or vowel placement), DO NOT use it. Instead, render the text to transparent PNGs with a shaping-aware tool (Python Pillow with libraqm, Inkscape, or a browser), import them as image planes or VSE image strips, and animate fade/scale in and out.
+- Visually confirm the Khmer spelling is correct in a render.
+
+# PHASE 6: CAMERA, RENDER, VERIFY
+- Reframe the camera on the cat (medium shot, slight low angle), with depth of field optional.
+- Render test frames at key poses from every clip and inspect them yourself: deformation, texture stretching, palms meeting, text correctness, lighting.
+- Final output: EEVEE, 1920×1080, 24 fps, MP4 (H.264) for the master sequence and each clip, saved under `C:\Programming-CTF\3D\Cat\renders\`. Do NOT use `/tmp\`.
+- Save incrementally (`v001`, `v002`, and so on).
+
+# DELIVERABLES
+1. Research brief with sources and the per-clip frame plan.
+2. `cat_anim_vXXX.blend` with the rig, 3 Actions, NLA master sequence, and titles.
+3. Rendered MP4s plus key-pose still images.
+4. A short report of what you did, any compromises (e.g., proxy rig choice), and known issues.
+
+# RULES
+- Research before implementing. Cite sources for every etiquette claim.
+- Never destroy original data: keep backups and never touch `cat.blend` directly.
+- After each phase, report progress and show a viewport screenshot or test render before moving on.
+- If a step fails (bad weights, broken Khmer text), diagnose and fix it. Don't silently skip.

@@ -1,0 +1,150 @@
+{
+ "size_bytes": 1297548,
+ "animations": {
+  "Confused": {
+   "channels": {
+    "translation": 14,
+    "rotation": 14,
+    "scale": 14,
+    "weights": 3
+   },
+   "duration_s": 2.458
+  },
+  "Goodbye": {
+   "channels": {
+    "translation": 14,
+    "rotation": 14,
+    "scale": 14,
+    "weights": 3
+   },
+   "duration_s": 2.958
+  },
+  "Greeting_Sampeah": {
+   "channels": {
+    "translation": 14,
+    "rotation": 14,
+    "scale": 14,
+    "weights": 3
+   },
+   "duration_s": 3.458
+  },
+  "Listening_Loop": {
+   "channels": {
+    "translation": 14,
+    "rotation": 14,
+    "scale": 14,
+    "weights": 3
+   },
+   "duration_s": 4
+  },
+  "Talking_Loop": {
+   "channels": {
+    "translation": 14,
+    "rotation": 14,
+    "scale": 14,
+    "weights": 3
+   },
+   "duration_s": 3
+  },
+  "Thinking_Loop": {
+   "channels": {
+    "translation": 14,
+    "rotation": 14,
+    "scale": 14,
+    "weights": 3
+   },
+   "duration_s": 4
+  },
+  "WakeUp": {
+   "channels": {
+    "translation": 14,
+    "rotation": 14,
+    "scale": 14,
+    "weights": 3
+   },
+   "duration_s": 3.458
+  }
+ },
+ "morph_targets": {
+  "Agent_Blush": [
+   "Blush_Strong"
+  ],
+  "Agent_Eyes": [
+   "Eyes_Closed",
+   "Eyes_Happy",
+   "Eyes_Wide",
+   "Look_Up",
+   "Look_Left",
+   "Look_Right",
+   "Eye_Squint_R"
+  ],
+  "Agent_Mouth": [
+   "mouth_open",
+   "Mouth_A",
+   "Mouth_O",
+   "Mouth_E",
+   "Mouth_Smile",
+   "Mouth_Wavy"
+  ]
+ },
+ "materials": [
+  [
+   "Agent_Blush",
+   "unlit",
+   true,
+   "BLEND"
+  ],
+  [
+   "Agent_PropFill",
+   "unlit",
+   true,
+   "OPAQUE"
+  ],
+  [
+   "Outline_Brown",
+   "unlit",
+   false,
+   "OPAQUE"
+  ],
+  [
+   "Agent_EyeDark",
+   "unlit",
+   true,
+   "OPAQUE"
+  ],
+  [
+   "Agent_EyeHighlight",
+   "unlit",
+   true,
+   "OPAQUE"
+  ],
+  [
+   "Agent_Mouth",
+   "unlit",
+   true,
+   "OPAQUE"
+  ],
+  [
+   "Skin",
+   "unlit",
+   true,
+   "OPAQUE"
+  ],
+  [
+   "Material",
+   "unlit",
+   true,
+   "OPAQUE"
+  ],
+  [
+   "Material.002",
+   "unlit",
+   true,
+   "OPAQUE"
+  ]
+ ],
+ "nodes": 26,
+ "triangles": 32368,
+ "missing_actions": [],
+ "actions_without_morph_channels": []
+}

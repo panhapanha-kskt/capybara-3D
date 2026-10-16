@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Capybara Agent Preview</title>
+<style>
+  :root { --bg: #f4efe8; --fg: #3a2418; --btn: #fff; --btn-on: #c98b5e; }
+  body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg); color: var(--fg);
+         display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px; }
+  #stage { width: min(360px, 90vw); aspect-ratio: 1; border-radius: 16px; background: #fff; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 560px; }
+  button { border: 1px solid #c9b8a8; background: var(--btn); color: var(--fg); padding: 6px 10px;
+           border-radius: 8px; cursor: pointer; font-size: 14px; }
+  button.on { background: var(--btn-on); color: #fff; border-color: var(--btn-on); }
+  label { font-size: 14px; }
+</style>
+</head>
+<body>
+  <h3 style="margin:0">Capybara agent: GLB preview</h3>
+  <canvas id="stage"></canvas>
+  <div class="row" id="buttons"></div>
+  <div class="row">
+    <label><input type="checkbox" id="amp"> Drive <code>mouth_open</code> with fake audio amplitude</label>
+  </div>
+  <p style="font-size:13px;max-width:520px;text-align:center">Serve this folder over HTTP (for example
+    <code>python -m http.server</code> inside <code>export/</code>) and open
+    <code>http://localhost:8000/preview.html</code>. Opening the file directly will not load the GLB.</p>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+const canvas = document.getElementById("stage");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+const scene = new THREE.Scene();
+// Same view direction as the Blender camera (the capybara faces -X in Blender, which is -X in glTF too).
+const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 50);
+camera.position.set(-5.7, 1.28, -0.07);
+camera.lookAt(0, 1.28, -0.07);
+
+const STATES = ["Greeting_Sampeah", "Listening_Loop", "Thinking_Loop", "Talking_Loop",
+                "Confused", "WakeUp", "Goodbye"];
+const ONE_SHOT = new Set(["Greeting_Sampeah", "Confused", "WakeUp", "Goodbye"]);
+let mixer, actions = {}, current, mouth, mouthIdx;
+
+new GLTFLoader().load("capybara_agent.glb", (gltf) => {
+  scene.add(gltf.scene);
+  mixer = new THREE.AnimationMixer(gltf.scene);
+  for (const clip of gltf.animations) {
+    const a = mixer.clipAction(clip);
+    if (ONE_SHOT.has(clip.name)) { a.setLoop(THREE.LoopOnce); a.clampWhenFinished = true; }
+    actions[clip.name] = a;
+  }
+  gltf.scene.traverse((o) => {
+    if (o.morphTargetDictionary && "mouth_open" in o.morphTargetDictionary) {
+      mouth = o; mouthIdx = o.morphTargetDictionary.mouth_open;
+    }
+  });
+  // One-shots hand back to Listening (except Goodbye, which holds its happy-eyes end pose).
+  mixer.addEventListener("finished", (e) => {
+    if (e.action !== current) return;  // ignore one-shots that were already faded out
+    if (e.action.getClip().name !== "Goodbye") play("Listening_Loop");
+  });
+  const box = document.getElementById("buttons");
+  for (const name of STATES) {
+    const b = document.createElement("button");
+    b.textContent = name; b.dataset.name = name;
+    b.onclick = () => play(name);
+    box.appendChild(b);
+  }
+  play("WakeUp");
+});
+
+function play(name, fade = 0.3) {
+  const next = actions[name];
+  if (!next || next === current) return;
+  next.reset().setEffectiveWeight(1).play();
+  if (current) current.crossFadeTo(next, fade, false);
+  current = next;
+  document.querySelectorAll("#buttons button").forEach((b) => b.classList.toggle("on", b.dataset.name === name));
+}
+
+const clock = new THREE.Clock();
+const amp = document.getElementById("amp");
+renderer.setAnimationLoop(() => {
+  const dt = clock.getDelta();
+  if (mixer) mixer.update(dt);
+  // Audio-driven mouth: write AFTER mixer.update so the clip's baked value is overridden.
+  if (mouth && amp.checked) {
+    const t = clock.elapsedTime;
+    mouth.morphTargetInfluences[mouthIdx] = Math.max(0, Math.sin(t * 13) * 0.6 + Math.sin(t * 7.3) * 0.4);
+  }
+  const s = canvas.clientWidth;
+  if (canvas.width !== s * renderer.getPixelRatio()) renderer.setSize(s, s, false);
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>
