@@ -1,0 +1,5 @@
+# Rendered PNG frame sequences (the WebM files next to them are committed)
+Capybara/export/renders/*/
+
+# Blender autosave copies
+*.blend1
