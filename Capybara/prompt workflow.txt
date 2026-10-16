@@ -1,0 +1,51 @@
+# Task: Plan and implement web-agent animations for my capybara character in Blender
+
+## Context
+- Project folder: `D:\capybara-3D`
+- Blender file: `D:\capybara-3D\Capybara\capybara.blend` (Blender 5.2.2 LTS)
+- Scene objects: Camera, Cube, Cube.001, Cube.002, Cube.003, Empty, EYE, Plane, Sun
+- The character is a cute, chibi-style capybara with a thick dark-brown outline, a flat 2D-illustration look, pink blush cheeks and closed sleepy eyes. It sits facing the camera.
+- Goal: the capybara will be the animated avatar of an **AI chat agent on a website**. Each animation is a state the website switches between based on chat events.
+- If the Blender MCP connection is available, use it to inspect and edit the scene live. Otherwise, write Python (bpy) scripts and run them with `blender --background --python`.
+
+## Animation states I want (only these 7)
+1. **Greeting (Khmer):** the capybara opens its eyes and does the Cambodian **sampeah** greeting: palms pressed together at chest level with a slight bow of the head and body, then a happy return to neutral. This goes with the greeting "សួស្តី" (Suostei). Do NOT render the Khmer text in Blender, because Blender's text objects don't shape Khmer script correctly. The website will show the text in a speech bubble. Plays once.
+2. **Listening:** head tilts slightly toward the user, ears perk up, eyes open and attentive, gentle breathing. Loops.
+3. **Thinking:** eyes look up or to the side, one paw taps or rests on the chin, a slow head sway. Optionally three small "..." dots bobbing above the head. Loops.
+4. **Talking (lip-sync loop):** a generic talking loop that cycles mouth shapes (closed → A → O → E → closed) at a natural, irregular rhythm, with a small head bob and blinks. It must loop seamlessly so the website can play it for any length of reply. Also expose a simple **"mouth open" shape key**, so audio amplitude can drive it in the browser later if needed.
+5. **Confused / error:** head tilts, one ear droops, a small "?" pops up above the head, then the capybara gives a small shrug. Plays once, then settles.
+6. **Wake up:** starts from the current sleeping pose (closed eyes, head slightly down). It startles, blinks a few times, does a little shake, then ends in the idle/listening pose. Plays once.
+7. **Goodbye:** a paw wave plus a slight bow, then the eyes close happily (^ ^). Plays once.
+
+## Phase 1: Research (do this first, use web search)
+Research current best practices and summarize them briefly, with source links, for:
+- Rigging a simple stylized/chibi character in Blender 5.x: minimal armature, setting pivots or origins on separate mesh parts, and shape keys versus bones for the face.
+- Building facial expressions and visemes with shape keys for cartoon lip-sync loops.
+- Organizing multiple animations as separate **Actions** or NLA tracks for **glTF/GLB export** to the web (three.js), including the glTF exporter settings that keep shape keys and every action.
+- Making seamless loops: Cycles F-modifiers, and matching the first and last keyframes.
+- Animation principles for "alive" UI mascots: anticipation, squash and stretch, overlap, and natural blink timing.
+- A short note on the Khmer sampeah gesture, so the greeting is culturally correct (hand height, bow depth).
+- Keeping the thick outline look intact while the mesh deforms (texture-based outline versus Solidify inverted-hull versus Line Art).
+
+## Phase 2: Inspect and plan (enter plan mode, don't change anything yet)
+- Inspect the .blend file: what each object is (which Cube is the body, head, paws, ears?), how the outline and the closed eyes are made, the materials, modifiers and constraints, and the current origins.
+- Report what is missing for the 7 states (for example: no open-eye shape, no mouth, no ears as separate parts).
+- Propose a plan: the armature bone list, the shape key list (eyes open/closed/happy, look up, mouth closed/A/O/E/open, blush intensity), how the "..." and "?" props will be made, and the frame length of each action at 24 fps.
+- Wait for my approval before implementing.
+
+## Phase 3: Implement (after I approve)
+- **Make a backup first:** save a copy as `capybara_backup_before_anim.blend` and don't overwrite it.
+- Build everything with a reusable Python script saved in the project, for example `D:\capybara-3D\Capybara\scripts\build_agent_animations.py`, so it can be re-run.
+- Create one named Action per state: `Greeting_Sampeah`, `Listening_Loop`, `Thinking_Loop`, `Talking_Loop`, `Confused`, `WakeUp`, `Goodbye`.
+- Loops must be seamless. One-shot animations must start and end in a neutral pose that blends cleanly with Listening.
+- Keep the camera framing and the art style unchanged. Motion should be soft, cute and readable at a small size (a chat widget is about 150–250 px).
+
+## Phase 4: Export and verify
+- Export a **GLB** containing all actions and shape keys to `D:\capybara-3D\Capybara\export\capybara_agent.glb`.
+- Also render each state as a **transparent WebM** (VP9 with alpha) or a PNG sequence to `D:\capybara-3D\Capybara\export\renders\`, so I can use video if the 3D route is too heavy.
+- Verify by re-importing the GLB, or by checking that every action and shape key is present, then render one preview frame per state and show me the frames.
+- Finally, give me a short summary: what you built, the action names and frame ranges, any limitations, and a small JavaScript snippet (three.js `AnimationMixer`) showing how to switch between states on chat events (`onOpen` → Greeting, `onUserTyping` → Listening, `onWaitingForAI` → Thinking, `onAIResponse` → Talking, `onError` → Confused, `onReturn` → WakeUp, `onClose` → Goodbye).
+
+## Rules
+- Ask me before deleting or replacing any existing object or material.
+- If something about the model is unclear (for example, which part is the head), show me a screenshot and ask instead of guessing.
